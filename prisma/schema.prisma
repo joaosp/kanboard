@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  name         String
+  passwordHash String        @map("password_hash")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  boards       BoardMember[]
+
+  @@map("users")
+}
+
+model Board {
+  id        String        @id @default(uuid())
+  name      String
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  members   BoardMember[]
+  lists     List[]
+
+  @@map("boards")
+}
+
+model BoardMember {
+  boardId String @map("board_id")
+  userId  String @map("user_id")
+  role    String @default("member")
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([userId], name: "idx_board_member_user")
+  @@map("board_members")
+}
+
+model List {
+  id        String   @id @default(uuid())
+  boardId   String   @map("board_id")
+  name      String
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]
+
+  @@index([boardId], name: "idx_list_board")
+  @@map("lists")
+}
+
+model Card {
+  id          String   @id @default(uuid())
+  listId      String   @map("list_id")
+  title       String
+  description String?
+  position    Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@index([listId], name: "idx_card_list")
+  @@map("cards")
+}

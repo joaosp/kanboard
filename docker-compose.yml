@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kanboard-db
+    environment:
+      POSTGRES_USER: kanboard
+      POSTGRES_PASSWORD: kanboard
+      POSTGRES_DB: kanboard
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
