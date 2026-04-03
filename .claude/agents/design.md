@@ -108,6 +108,11 @@ The written markdown file must contain these sections:
 
 ### Pencil Mockup
 - (path to `.pen` file if created, otherwise "Not requested")
+- If a `.pen` file was created, list every top-level screen frame with its **node ID** and **name** so downstream agents can reference specific mockups:
+  | Screen | Node ID | Name |
+  |--------|---------|------|
+  | Board Column with Labels | `RTKuh` | 1 - Board Column with Labels |
+  | ... | ... | ... |
 ```
 
-After writing the file, confirm the path to the user so downstream agents (architect) can locate it.
+After writing the file, confirm the path to the user so downstream agents (architect, implement) can locate it.

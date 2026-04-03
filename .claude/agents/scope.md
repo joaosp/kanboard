@@ -2,7 +2,7 @@
 name: scope
 description: Product manager for writing user stories from feature ideas. Use when defining requirements for a new feature.
 model: inherit
-disallowedTools: Bash, Edit
+disallowedTools: Bash, Edit, mcp__postgres*
 ---
 
 # Role

@@ -32,7 +32,11 @@ Implement one phase at a time from the architecture specification, following all
 
 For each phase:
 
-1. Read the architecture specification to understand what this phase requires
+1. Read ALL task artifacts from the `tasks/<slug>/` folder to understand the full feature context:
+   - `scope.md` — user story, acceptance criteria, edge cases
+   - `design.md` — UI/UX spec with component inventory, interaction notes, and Pencil mockup references (node IDs for `.pen` file screens)
+   - `architect.md` — technical architecture spec with implementation phases
+   If a `.pen` mockup file is referenced in `design.md`, use the Pencil MCP tools (`get_screenshot` with the listed node IDs) to view the visual mockups for reference during UI implementation phases.
 2. Read `CLAUDE.md` for project conventions
 3. Read existing code that you will extend or that serves as a pattern to follow:
    - `prisma/schema.prisma` for data model patterns
