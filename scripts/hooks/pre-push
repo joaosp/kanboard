@@ -1,31 +1,51 @@
 #!/usr/bin/env bash
 set -e
+
 echo "Running AI code review..."
 claude --agent review --print \
   "Review the changes about to be pushed.
+
    Run git diff @{push}.. to see the diff.
    Read all changed files for full context.
+
    Focus on: bugs, security issues, convention violations,
    missing tests, and error handling gaps.
+
    Output a structured review as markdown.
    If you find critical issues, end with: BLOCKING: <summary>" \
 | tee /tmp/ai-review-output.md
 
 if grep -q "^BLOCKING:" /tmp/ai-review-output.md; then
+  echo ""
   echo "AI review found blocking issues. Fix them before pushing."
   exit 1
 fi
 
+echo ""
 echo "Running AI security scan..."
 claude --agent security --print \
   "Perform a security audit on the changes about to be pushed.
+
    Run git diff @{push}.. to see the diff.
-   Check for: input validation, SQL injection, auth gaps, secrets, XSS, IDOR.
-   If critical: end with BLOCKING: <summary>" \
+   Read all changed files.
+
+   Check for:
+   1. Input validation on all new endpoints
+   2. SQL injection or ORM misuse
+   3. Authentication and authorization gaps
+   4. Secrets or credentials in code
+   5. XSS vulnerabilities
+   6. IDOR (insecure direct object reference)
+
+   Output a security assessment as markdown.
+   If you find critical vulnerabilities, end with: BLOCKING: <summary>" \
 | tee /tmp/ai-security-output.md
 
 if grep -q "^BLOCKING:" /tmp/ai-security-output.md; then
-  echo "Security scan found blocking issues."
+  echo ""
+  echo "Security scan found blocking issues. Fix them before pushing."
   exit 1
 fi
+
+echo ""
 echo "AI review and security scan passed."
