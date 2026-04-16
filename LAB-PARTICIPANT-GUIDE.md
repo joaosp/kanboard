@@ -247,18 +247,27 @@ Prompt:
 ```
 Create the following agent files in .claude/agents/:
 
-1. scope.md      — Product manager for user stories (no code, no implementation)
-2. architect.md  — System architect: DB/API/UI/phases specs, no code
+1. scope.md      — Product manager for user stories. Needs Read, Grep, Glob,
+                   Write, Edit, and Bash (to create directories and save files).
+                   Must NOT write code — only specs and stories.
+2. architect.md  — System architect: DB/API/UI/phases specs. Same tools as scope.
+                   Must NOT write code — only architecture documents.
 3. implement.md  — Senior developer: follows CLAUDE.md strictly, builds one phase
-                   at a time, always runs npm run lint && typecheck && test after changes
-4. review.md     — READ-ONLY code reviewer (tools: Read, Grep, Glob, Bash for
-                   lint/typecheck/test only — NO Edit, NO Write)
-5. security.md   — READ-ONLY security auditor focused on OWASP Top 10 (same tool
-                   restrictions as review)
-6. release.md    — Release manager: E2E tests, CI, PR creation via gh
+                   at a time, always runs npm run lint && typecheck && test after changes.
+                   Full tool access (Read, Write, Edit, Bash, Grep, Glob).
+4. review.md     — READ-ONLY code reviewer. Tools: Read, Grep, Glob, Bash (for
+                   lint/typecheck/test only). NO Edit, NO Write.
+5. security.md   — READ-ONLY security auditor focused on OWASP Top 10. Same tool
+                   restrictions as review — NO Edit, NO Write.
+6. release.md    — Release manager: E2E tests, CI, PR creation via gh. Full tool access.
 
 Each agent file uses Markdown frontmatter (name, description, tools) then a body:
 Role → Objective → Constraints → Process → Output Format.
+
+IMPORTANT: the frontmatter "tools" list controls what the agent can actually do.
+If an agent needs to save files (like scope.md saving a story), it MUST have
+Write and Edit in its tools list. If you forget, the agent will generate output
+but won't be able to persist it.
 
 Tailor every agent to Kanboard:
 - Reference CLAUDE.md for conventions
@@ -1046,6 +1055,7 @@ The 7-step loop you just ran:
 | Playwright tests: "connection refused" | Dev server not running — `npm run dev` in Terminal 1, then re-run |
 | Agent refuses a command you need | Add it to `permissions.allow` in `.claude/settings.json`, then restart `claude` |
 | `/agents scope` doesn't switch to the agent | `/agents` is for managing agents, not invoking them. Exit and run `claude --agent scope` from the terminal instead |
+| Agent says "I don't have Write tool available" | The agent's frontmatter `tools:` list is missing Write/Edit. Open `.claude/agents/<name>.md`, add Write and Edit to the tools list, save, and relaunch `claude --agent <name>` |
 | Review/security agent modified a file | Edit its frontmatter `tools:` — only `Read, Grep, Glob, Bash` (remove `Edit`, `Write`) |
 | MCP postgres errors on start | Is Postgres running? `docker ps` — container should be `kanboard-db` |
 | `mcp__postgres__*` tools not available | MCP config goes in `.mcp.json` (not `.claude/settings.json`). Run `claude mcp add postgres -s project -- npx -y @modelcontextprotocol/server-postgres postgresql://kanboard:kanboard@localhost:5432/kanboard`, then restart `claude`, then check `/mcp` |
