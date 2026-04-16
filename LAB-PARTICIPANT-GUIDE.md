@@ -146,7 +146,7 @@ and how does BoardMember gate access?
 
 If it answers correctly, your `CLAUDE.md` is loading properly.
 
-### 1.3 · Project settings + MCP (15 min)
+### 1.3 · Project settings (10 min)
 
 ```bash
 mkdir -p .claude
@@ -157,7 +157,9 @@ In Claude Code:
 ```
 Create a .claude/settings.json file for this project.
 
-Based on package.json scripts and the tools in this repo, configure:
+Based on package.json scripts and the tools in this repo, configure ONLY
+permissions (do NOT include an mcpServers block — MCP goes in a separate
+file, see next step).
 
 1. permissions.allow — allow-list the safe dev commands Claude can run
    without asking:
@@ -168,20 +170,17 @@ Based on package.json scripts and the tools in this repo, configure:
    - git status, git diff, git log, git branch, git checkout, git add, git commit
    - gh pr create, gh pr view
 
-2. permissions.deny — block destructive operations:
-   - rm -rf /*
-   - git push --force
-   - npm run db:reset
-   - any curl/wget that isn't localhost
-
-3. mcpServers — configure a PostgreSQL MCP server pointing to the local DB.
-   DATABASE_URL is: postgresql://kanboard:kanboard@localhost:5432/kanboard
-   Use @modelcontextprotocol/server-postgres.
+2. permissions.deny — block destructive operations. Cover both flag orderings
+   so the matcher can't be bypassed:
+   - rm -rf / and rm -rf /*
+   - git push --force*, git push -f*, git push * --force*, git push * -f*
+   - npm run db:reset*, prisma migrate reset*, npx prisma migrate reset*
+   - curl *, wget *
 
 Write to .claude/settings.json.
 ```
 
-**Restart `claude`** after saving settings (important — settings only load on startup).
+**Restart `claude`** after saving (settings only load on startup). Exit the session and run `claude` again.
 
 **Test permissions:**
 
@@ -197,13 +196,44 @@ Delete the node_modules directory.
 
 Should refuse or ask for approval.
 
-**Test MCP (Postgres must be running):**
+### 1.4 · Connect the Postgres MCP server (5 min)
+
+MCP servers do **not** live in `.claude/settings.json` — they go in a project-level `.mcp.json`. The cleanest way to create it is the CLI:
+
+```bash
+# in a new terminal, in the kanboard folder
+claude mcp add postgres -s project -- npx -y @modelcontextprotocol/server-postgres postgresql://kanboard:kanboard@localhost:5432/kanboard
+```
+
+That writes `.mcp.json` at the repo root. Verify:
+
+```bash
+cat .mcp.json
+```
+
+You should see the `postgres` server with `command: npx` and the local `DATABASE_URL`.
+
+**Restart your `claude` session** (exit and relaunch — MCP servers only load on startup).
+
+Check the server connected:
+
+```
+/mcp
+```
+
+`postgres` should be listed as connected.
+
+**Now test the MCP query** (Postgres must be running via `docker compose up -d`):
 
 ```
 Using the postgres MCP server, list all tables and their row counts.
 ```
 
-### 1.4 · Create the agent suite (15 min)
+Claude should call `mcp__postgres__query` directly instead of offering to shell out to `psql`.
+
+> **Gotcha:** if you ever change `DATABASE_URL` in `.env`, update `.mcp.json` to match. The connection string is embedded in the MCP server command.
+
+### 1.5 · Create the agent suite (15 min)
 
 ```bash
 mkdir -p .claude/agents
@@ -258,7 +288,7 @@ and also fix them by editing the file.
 
 It should review but refuse the edit.
 
-### 1.5 · Append the design system to `CLAUDE.md` (5 min)
+### 1.6 · Append the design system to `CLAUDE.md` (5 min)
 
 ```
 Analyze the frontend design system in this project:
@@ -280,20 +310,21 @@ APPEND a new "## Design System" section to CLAUDE.md with:
 Do NOT overwrite existing content — append only.
 ```
 
-### 1.6 · Lab 1 checkpoint
+### 1.7 · Lab 1 checkpoint
 
 - [ ] `CLAUDE.md` at repo root, covers stack / architecture / data model / conventions / commands / design system
-- [ ] `.claude/settings.json` with allow-list, deny-list, and postgres MCP
+- [ ] `.claude/settings.json` with allow-list + deny-list (NO mcpServers block)
+- [ ] `.mcp.json` at repo root with the `postgres` server
 - [ ] `.claude/agents/{scope,architect,implement,review,security,release}.md` all present
 - [ ] Claude runs `npm run lint` without prompting
 - [ ] Claude refuses destructive commands
-- [ ] MCP query against Postgres works
+- [ ] `/mcp` shows `postgres` connected; MCP query against Postgres works
 - [ ] `scope` agent produces a story; `review` agent refuses to edit
 
 **Commit your work:**
 
 ```bash
-git add CLAUDE.md .claude/
+git add CLAUDE.md .claude/ .mcp.json
 git commit -m "Lab 1: configure Claude Code ecosystem"
 ```
 
@@ -1001,6 +1032,7 @@ The 7-step loop you just ran:
 | Agent refuses a command you need | Add it to `permissions.allow` in `.claude/settings.json`, then restart `claude` |
 | Review/security agent modified a file | Edit its frontmatter `tools:` — only `Read, Grep, Glob, Bash` (remove `Edit`, `Write`) |
 | MCP postgres errors on start | Is Postgres running? `docker ps` — container should be `kanboard-db` |
+| `mcp__postgres__*` tools not available | MCP config goes in `.mcp.json` (not `.claude/settings.json`). Run `claude mcp add postgres -s project -- npx -y @modelcontextprotocol/server-postgres postgresql://kanboard:kanboard@localhost:5432/kanboard`, then restart `claude`, then check `/mcp` |
 | `git push` rejected by pre-push hook | Read the `BLOCKING:` lines, fix, push again. Emergency bypass: `git push --no-verify` |
 | Unit tests can't find a Prisma type | `npx prisma generate` after schema changes |
 | "Want to start over from scratch" | `git checkout workshop-practice && git clean -fd && npm install` |
@@ -1022,6 +1054,10 @@ npm run dev
 # Claude sessions
 claude
 /agents scope        # or architect / implement / review / security / release
+/mcp                 # show connected MCP servers
+
+# Add the postgres MCP server (writes .mcp.json, requires claude restart)
+claude mcp add postgres -s project -- npx -y @modelcontextprotocol/server-postgres postgresql://kanboard:kanboard@localhost:5432/kanboard
 
 # Self-verify loop (run this a lot)
 npm run lint && npm run typecheck && npm test
