@@ -120,6 +120,15 @@ Output a CLAUDE.md file that covers:
 - All dev commands
 - Important constraints and anti-patterns to avoid (no any, no default exports,
   no raw SQL, CSS Modules only, Zod on every input, requireAuth on every endpoint)
+- A "Feature Development Workflow" section that documents these conventions:
+  - Each feature lives on a branch named feature/<slug>
+  - All planning artifacts go under tasks/<slug>/ with this structure:
+      tasks/<slug>/scope.md       — user story (produced by scope agent)
+      tasks/<slug>/design.md      — UI specification (produced by design agent)
+      tasks/<slug>/architect.md   — architecture spec (produced by architect agent)
+  - Implementation follows the architecture spec's phases
+  - New source code goes under the existing src/ structure
+  - New tests go under tests/unit/ and tests/e2e/
 
 Write it to ./CLAUDE.md.
 Be specific to THIS codebase. Extract actual patterns, not generic advice.
@@ -268,13 +277,26 @@ Create the following agent files in .claude/agents/:
 Each agent file uses Markdown frontmatter (name, description, tools) then a body:
 Role → Objective → Constraints → Process → Output Format.
 
-IMPORTANT: the frontmatter "tools" list controls what the agent can actually do.
-If an agent needs to save files (like scope.md saving a story), it MUST have
-Write and Edit in its tools list. If you forget, the agent will generate output
-but won't be able to persist it.
+IMPORTANT — two things that will bite you if you skip them:
+
+1. TOOLS: the frontmatter "tools" list controls what the agent can actually
+   do. If an agent needs to save files (like scope saving a story), it MUST
+   have Write and Edit in its tools list. Without them, the agent generates
+   output but can't persist it.
+
+2. OUTPUT PATHS: every spec-producing agent (scope, design, architect) must
+   know where to save its work. Bake this into each agent's body:
+   - scope saves to tasks/<slug>/scope.md
+   - design saves to tasks/<slug>/design.md
+   - architect saves to tasks/<slug>/architect.md
+   The agent should infer <slug> from the feature branch name (by running
+   git branch --show-current and stripping the feature/ prefix), or ask
+   the user if unclear. It should create the tasks/<slug>/ directory if
+   it doesn't exist yet (mkdir -p tasks/<slug>).
 
 Tailor every agent to Kanboard:
-- Reference CLAUDE.md for conventions
+- Reference CLAUDE.md for conventions (especially the "Feature Development
+  Workflow" section you added in step 1.2 for output paths)
 - Use the project's exact commands (npm run lint/typecheck/test/test:e2e)
 - Mention the stack (React 18, Express, Prisma, PostgreSQL, Zod, Vitest, Playwright)
 ```
