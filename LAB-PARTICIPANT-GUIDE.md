@@ -250,16 +250,20 @@ Create the following agent files in .claude/agents/:
 1. scope.md      — Product manager for user stories. Needs Read, Grep, Glob,
                    Write, Edit, and Bash (to create directories and save files).
                    Must NOT write code — only specs and stories.
-2. architect.md  — System architect: DB/API/UI/phases specs. Same tools as scope.
+2. design.md     — UI/UX designer for UI specifications. Same tools as scope.
+                   Produces wireframes, user flows, state descriptions, and
+                   component specs referencing the design system in CLAUDE.md.
+                   Must NOT write code — only UI spec documents.
+3. architect.md  — System architect: DB/API/UI/phases specs. Same tools as scope.
                    Must NOT write code — only architecture documents.
-3. implement.md  — Senior developer: follows CLAUDE.md strictly, builds one phase
+4. implement.md  — Senior developer: follows CLAUDE.md strictly, builds one phase
                    at a time, always runs npm run lint && typecheck && test after changes.
                    Full tool access (Read, Write, Edit, Bash, Grep, Glob).
-4. review.md     — READ-ONLY code reviewer. Tools: Read, Grep, Glob, Bash (for
+5. review.md     — READ-ONLY code reviewer. Tools: Read, Grep, Glob, Bash (for
                    lint/typecheck/test only). NO Edit, NO Write.
-5. security.md   — READ-ONLY security auditor focused on OWASP Top 10. Same tool
+6. security.md   — READ-ONLY security auditor focused on OWASP Top 10. Same tool
                    restrictions as review — NO Edit, NO Write.
-6. release.md    — Release manager: E2E tests, CI, PR creation via gh. Full tool access.
+7. release.md    — Release manager: E2E tests, CI, PR creation via gh. Full tool access.
 
 Each agent file uses Markdown frontmatter (name, description, tools) then a body:
 Role → Objective → Constraints → Process → Output Format.
@@ -334,7 +338,7 @@ Do NOT overwrite existing content — append only.
 - [ ] `CLAUDE.md` at repo root, covers stack / architecture / data model / conventions / commands / design system
 - [ ] `.claude/settings.json` with allow-list + deny-list (NO mcpServers block)
 - [ ] `.mcp.json` at repo root with the `postgres` server
-- [ ] `.claude/agents/{scope,architect,implement,review,security,release}.md` all present
+- [ ] `.claude/agents/{scope,design,architect,implement,review,security,release}.md` all present (7 agents)
 - [ ] Claude runs `npm run lint` without prompting
 - [ ] Claude refuses destructive commands
 - [ ] `/mcp` shows `postgres` connected; MCP query against Postgres works
@@ -421,9 +425,15 @@ could build an automated test from it alone — include the precondition, the us
 action, and the expected observable outcome.
 ```
 
-### 2.3 · UI specification (10 min)
+### 2.3 · UI specification with the design agent (10 min)
 
-Stay in the same session (default agent, not scope):
+Exit the scope session and launch the design agent:
+
+```bash
+claude --agent design
+```
+
+Paste this prompt:
 
 ```
 Based on the user story at tasks/card-labels/scope.md, produce a UI specification.
@@ -1005,7 +1015,7 @@ On `feature/<slug>`:
 | 1 | `CLAUDE.md` |
 | 1 | `.claude/settings.json` |
 | 1 | `.mcp.json` |
-| 1 | `.claude/agents/{scope,architect,implement,review,security,release}.md` |
+| 1 | `.claude/agents/{scope,design,architect,implement,review,security,release}.md` |
 | 2 | `tasks/<slug>/scope.md` |
 | 2 | `tasks/<slug>/design.md` |
 | 2 | `tasks/<slug>/architect.md` |
@@ -1025,7 +1035,7 @@ On `feature/<slug>`:
 The 7-step loop you just ran:
 
 1. **Story** — `scope` agent → `tasks/<slug>/scope.md`
-2. **UI** — default agent → `tasks/<slug>/design.md`
+2. **UI** — `design` agent → `tasks/<slug>/design.md`
 3. **Architecture** — `architect` agent → `tasks/<slug>/architect.md`
 4. **Implement** — `implement` agent → Phase 1 code + unit tests
 5. **Review** — `review` agent (read-only)
@@ -1096,7 +1106,7 @@ Launch a session scoped to a specific agent:
 claude --agent scope
 ```
 
-Available agent names: `scope`, `architect`, `implement`, `review`, `security`, `release`.
+Available agent names: `scope`, `design`, `architect`, `implement`, `review`, `security`, `release`.
 
 Check connected MCP servers (inside a running `claude` session):
 
