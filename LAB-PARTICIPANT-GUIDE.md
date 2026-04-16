@@ -541,9 +541,9 @@ git commit -m "Lab 2: story + UI spec + architecture for <slug>"
 
 ## Lab 3 · Implement + Review + Security (60 min)
 
-Time to write code. You'll build **only Phase 1** (backend) using the `implement` agent, then run the read-only `review` and `security` agents against your diff.
+Time to write code. You'll implement all three phases from the architecture spec, then run AI review and security scanning. Each phase follows the same loop: implement → verify → commit.
 
-### 3.1 · Implement Phase 1 (30 min)
+### 3.1 · Implement Phase 1 — Data layer + API (15 min)
 
 Verify you're still on your feature branch — `git status` should say "On branch feature/card-labels":
 
@@ -554,8 +554,7 @@ git status
 In your `claude` session:
 
 ```
-Using the implement agent, build Phase 1 of card labels. Phase 1 only —
-do not proceed to Phase 2.
+Using the implement agent, build Phase 1 of card labels.
 ```
 
 The implement agent should autonomously read the architecture spec, follow CLAUDE.md conventions, match existing code patterns, write unit tests, run the migration, and verify with lint/typecheck/test.
@@ -565,12 +564,11 @@ The implement agent should autonomously read the architecture spec, follow CLAUD
 | What to watch for | What to paste if it happens |
 |-------------------|-----------------------------|
 | File created in wrong directory | `That file should be in src/server/routes/, not src/routes/. Move it and update imports in src/server/index.ts.` |
-| Missing Zod validation on a POST | `The POST /api/boards/:boardId/labels endpoint has no Zod validation. Add a createLabelSchema following the pattern in src/server/schemas/ and wire it via the validate middleware.` |
-| Happy-path-only tests | `Your tests only cover the happy path. Add tests for missing required fields (400), invalid values, unauthorized (401 no token), forbidden (403 non-member), and not found (404 invalid boardId).` |
-| Wrong style (e.g. `.then().catch()`) | `Existing route handlers use async/await with try/catch. Rewrite to match project convention.` |
-| Uses `any` | `CLAUDE.md forbids `any`. Find the correct type or create an interface.` |
+| Missing Zod validation on a POST | `The POST endpoint has no Zod validation. Add a schema following the pattern in src/server/schemas/ and wire it via the validate middleware.` |
+| Happy-path-only tests | `Tests only cover the happy path. Add tests for missing required fields (400), invalid values, unauthorized (401), forbidden (403), and not found (404).` |
+| Uses `any` | `CLAUDE.md forbids any. Find the correct type or create an interface.` |
 
-**Self-verify before the review:**
+**Self-verify:**
 
 ```bash
 npm run lint
@@ -579,17 +577,68 @@ npm test
 ls prisma/migrations/
 ```
 
-All four must be happy — and `ls prisma/migrations/` should show a new directory whose name ends in `_add_card_labels` (or your slug).
+All must pass. `ls prisma/migrations/` should show a new directory for your feature.
 
-### 3.2 · AI code review (15 min)
+**Commit Phase 1:**
 
-In your `claude` session:
+```bash
+git add -A
+git commit -m "feat(<slug>): Phase 1 — data layer, API endpoints, unit tests"
+```
+
+### 3.2 · Implement Phase 2 — Core UI (10 min)
 
 ```
-Using the review agent, review the card labels implementation on this branch.
+Using the implement agent, build Phase 2 of card labels.
 ```
 
-The review agent should autonomously read the story + architecture spec, diff the branch against main, run lint/typecheck/test, check conventions, and produce a structured review with a verdict.
+The agent should read the architecture spec's Phase 2 section, build the frontend components, connect them to the API via the client, and add unit tests for new components.
+
+**Self-verify:**
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+```
+
+Open `http://localhost:3000` in your browser and manually check the new UI elements work.
+
+**Commit Phase 2:**
+
+```bash
+git add -A
+git commit -m "feat(<slug>): Phase 2 — core UI components"
+```
+
+### 3.3 · Implement Phase 3 — Polish (5 min)
+
+```
+Using the implement agent, build Phase 3 of card labels.
+```
+
+Phase 3 is typically polish: empty states, loading indicators, error handling, edge cases. Smaller than the other phases.
+
+**Self-verify and commit:**
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+git add -A
+git commit -m "feat(<slug>): Phase 3 — polish and edge cases"
+```
+
+### 3.4 · AI code review (10 min)
+
+Now review the full implementation across all three phases:
+
+```
+Using the review agent, review the complete card labels implementation
+on this branch.
+```
+
+The review agent should autonomously read the story + architecture spec, diff the branch, run lint/typecheck/test, check conventions, and produce a structured review with a verdict.
 
 **If there are critical issues:**
 
@@ -600,7 +649,7 @@ Using the implement agent, fix the critical issues from the review:
 
 Then re-run the review agent to verify.
 
-### 3.3 · Security scan (10 min)
+### 3.5 · Security scan (10 min)
 
 ```
 Using the security agent, perform a security audit of the card labels
@@ -616,7 +665,7 @@ Using the implement agent, fix the security issues:
 <paste findings>
 ```
 
-### 3.4 · Cross-review (5 min)
+### 3.6 · Cross-review (5 min)
 
 Find a partner with a different feature:
 
@@ -632,20 +681,21 @@ Give one piece of feedback the AI review missed — usually a UX or architectura
 git checkout feature/card-labels
 ```
 
-### 3.5 · Lab 3 checkpoint
+### 3.7 · Lab 3 checkpoint
 
-- [ ] Phase 1 files under `src/server/` and `tests/unit/`
-- [ ] New migration directory under `prisma/migrations/`
+- [ ] All 3 phases implemented: backend + UI + polish
+- [ ] Migration directory under `prisma/migrations/`
 - [ ] `npm run lint` / `typecheck` / `test` — all pass
+- [ ] Feature works visually at `http://localhost:3000`
 - [ ] Review agent: APPROVE (or all CRITICAL fixed)
 - [ ] Security agent: PASS (or all HIGH+ fixed)
 - [ ] One piece of human feedback received
 
-**Commit:**
+**Final Lab 3 commit** (if you have uncommitted fixes from review/security):
 
 ```bash
 git add -A
-git commit -m "Lab 3: implement <slug> Phase 1 (data layer + API + unit tests)"
+git commit -m "fix(<slug>): address review and security findings"
 ```
 
 ---
@@ -656,57 +706,14 @@ E2E tests → pre-push AI gate → CI pipeline → Pull Request → deployment s
 
 ### 4.1 · Plan and write E2E tests (20 min)
 
-**Plan first** (start a fresh `claude` session):
-
-```bash
-claude
-```
+Since all three phases are implemented, the E2E tests can exercise the real UI — not just the API. Use the release agent, which knows how to map acceptance criteria to Playwright tests:
 
 ```
-Read tasks/card-labels/scope.md.
-
-For each acceptance criterion, define a Playwright E2E test case:
-- Test name (reads like a requirement)
-- Preconditions (logged-in user, board exists, etc.)
-- Actions (click/type sequences)
-- Assertions (what must be true at the end)
-
-Output as a Markdown table. Do NOT write code yet.
+Using the release agent, write Playwright E2E tests for card labels.
+Map each acceptance criterion to at least one test.
 ```
 
-Review the plan. Every AC should have ≥1 test; every test must be independent (no test depends on another).
-
-**Now generate the tests:**
-
-```
-Now generate Playwright E2E tests based on the plan.
-
-IMPORTANT: Phase 1 is backend-only — no UI exists yet. Use Playwright's
-request context to test the API directly:
-
-  test('creates a label via API', async ({ request }) => {
-    const { token } = await login(request, 'demo@example.com', 'demo123');
-    const res = await request.post('/api/boards/<id>/labels', {
-      headers: { Authorization: `Bearer ${token}` },
-      data: { name: 'Bug', color: '#EF4444' },
-    });
-    expect(res.status()).toBe(201);
-    const body = await res.json();
-    expect(body.data.name).toBe('Bug');
-  });
-
-Write to tests/e2e/card-labels.spec.ts.
-
-Rules:
-1. API-level tests only — no UI selectors yet
-2. Each test fully independent: arrange → act → assert → cleanup
-3. Create tests/e2e/fixtures/test-helpers.ts if it doesn't exist, with:
-     - login(request, email, password)   → { token, userId }
-     - createBoard(request, token, name) → boardId
-     - cleanupBoard(request, token, boardId)
-4. Test success path + primary error paths (auth, validation, authorization)
-5. Descriptive names. At least one expect() per test.
-```
+The release agent should read the scope (for ACs), the architecture spec (for endpoints and data-testid selectors), and produce tests in `tests/e2e/`. Tests should use `data-testid` attributes, be fully independent, and cover both success and primary error paths.
 
 **Run the tests** (dev server must be running in Terminal 1):
 
