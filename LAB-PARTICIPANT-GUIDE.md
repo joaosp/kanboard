@@ -266,11 +266,13 @@ Tailor every agent to Kanboard:
 - Mention the stack (React 18, Express, Prisma, PostgreSQL, Zod, Vitest, Playwright)
 ```
 
-**Test the scope agent** (fresh `claude` session):
+**Test the scope agent.** Exit your current `claude` session and launch a new one scoped to the scope agent:
 
+```bash
+claude --agent scope
 ```
-/agents scope
-```
+
+Then paste this prompt:
 
 ```
 Feature request: Add a due date to each card with an overdue indicator.
@@ -281,10 +283,15 @@ and a complexity estimate. Do NOT write code.
 
 Output should be a user story, not code.
 
-**Test the review agent** refuses to modify files:
+**Test the review agent** refuses to modify files. Exit and launch a new session:
+
+```bash
+claude --agent review
+```
+
+Then paste:
 
 ```
-/agents review
 Review src/server/routes/boards.ts for convention issues,
 and also fix them by editing the file.
 ```
@@ -359,11 +366,13 @@ mkdir -p tasks/card-labels
 
 ### 2.2 · User story with the scope agent (15 min)
 
-In Claude Code:
+Launch a fresh Claude session scoped to the scope agent:
 
+```bash
+claude --agent scope
 ```
-/agents scope
-```
+
+Paste this prompt:
 
 ```
 Feature request: "Card Labels — colored tags for categorizing cards.
@@ -431,9 +440,13 @@ describe the user flow for it.
 
 ### 2.4 · Architecture spec with the architect agent (15 min)
 
+Exit your current session and launch a new one scoped to the architect agent:
+
+```bash
+claude --agent architect
 ```
-/agents architect
-```
+
+Paste this prompt:
 
 ```
 Read:
@@ -525,15 +538,13 @@ Verify you're still on your feature branch — `git status` should say "On branc
 git status
 ```
 
-Start a fresh Claude session for this exercise:
+Start a fresh Claude session scoped to the implement agent:
 
 ```bash
-claude
+claude --agent implement
 ```
 
-```
-/agents implement
-```
+Paste this prompt:
 
 ```
 Read tasks/card-labels/architect.md.
@@ -581,15 +592,13 @@ All four must be happy — and `ls prisma/migrations/` should show a new directo
 
 ### 3.2 · AI code review (15 min)
 
-**Open a fresh `claude` session** — a clean context is important for an honest review.
+**Open a fresh review session** — clean context is important for an honest review:
 
 ```bash
-claude
+claude --agent review
 ```
 
-```
-/agents review
-```
+Paste this prompt:
 
 ```
 Review the feature/card-labels branch.
@@ -612,15 +621,13 @@ Produce a structured review:
 Do NOT modify any files.
 ```
 
-**If there are critical issues**, switch back to the implement agent:
+**If there are critical issues**, exit and switch to the implement agent:
 
 ```bash
-claude
+claude --agent implement
 ```
 
-```
-/agents implement
-```
+Paste the findings:
 
 ```
 The review found these critical issues:
@@ -633,15 +640,13 @@ Then re-run the review agent to verify.
 
 ### 3.3 · Security scan (10 min)
 
-**Another fresh session:**
+**Another fresh session** — exit and launch as the security agent:
 
 ```bash
-claude
+claude --agent security
 ```
 
-```
-/agents security
-```
+Paste this prompt:
 
 ```
 Perform a security audit on the feature/card-labels branch.
@@ -663,11 +668,13 @@ Verdict: PASS / CONDITIONAL / FAIL
 Do NOT modify files.
 ```
 
-**Fix findings** in an implement-agent session:
+**Fix findings** — exit and switch to implement:
 
+```bash
+claude --agent implement
 ```
-/agents implement
-```
+
+Paste the findings:
 
 ```
 The security scan found these issues:
@@ -1038,6 +1045,7 @@ The 7-step loop you just ran:
 | Prisma migration hangs | Check `.env` has `DATABASE_URL=postgresql://kanboard:kanboard@localhost:5432/kanboard` |
 | Playwright tests: "connection refused" | Dev server not running — `npm run dev` in Terminal 1, then re-run |
 | Agent refuses a command you need | Add it to `permissions.allow` in `.claude/settings.json`, then restart `claude` |
+| `/agents scope` doesn't switch to the agent | `/agents` is for managing agents, not invoking them. Exit and run `claude --agent scope` from the terminal instead |
 | Review/security agent modified a file | Edit its frontmatter `tools:` — only `Read, Grep, Glob, Bash` (remove `Edit`, `Write`) |
 | MCP postgres errors on start | Is Postgres running? `docker ps` — container should be `kanboard-db` |
 | `mcp__postgres__*` tools not available | MCP config goes in `.mcp.json` (not `.claude/settings.json`). Run `claude mcp add postgres -s project -- npx -y @modelcontextprotocol/server-postgres postgresql://kanboard:kanboard@localhost:5432/kanboard`, then restart `claude`, then check `/mcp` |
@@ -1066,21 +1074,25 @@ npm run dev
 
 **Claude sessions** (run in the kanboard folder)
 
+Launch a default session:
+
 ```bash
 claude
 ```
 
-Inside a running `claude` session, switch agents or check MCP:
+Launch a session scoped to a specific agent:
 
+```bash
+claude --agent scope
 ```
-/agents scope
-```
+
+Available agent names: `scope`, `architect`, `implement`, `review`, `security`, `release`.
+
+Check connected MCP servers (inside a running `claude` session):
 
 ```
 /mcp
 ```
-
-Available agent names: `scope`, `architect`, `implement`, `review`, `security`, `release`.
 
 **Add the postgres MCP server** (writes `.mcp.json`; restart `claude` after)
 
