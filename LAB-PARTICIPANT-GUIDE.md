@@ -541,9 +541,9 @@ git commit -m "Lab 2: story + UI spec + architecture for <slug>"
 
 ## Lab 3 · Implement + Review + Security (60 min)
 
-Time to write code. You'll implement all three phases from the architecture spec, then run AI review and security scanning. Each phase follows the same loop: implement → verify → commit.
+Time to write code. You'll implement the full feature (all three phases from the architecture spec in a single pass), then run AI review and security scanning.
 
-### 3.1 · Implement Phase 1 — Data layer + API (15 min)
+### 3.1 · Implement all phases (30 min)
 
 Verify you're still on your feature branch — `git status` should say "On branch feature/card-labels":
 
@@ -554,10 +554,11 @@ git status
 In your `claude` session:
 
 ```
-Using the implement agent, build Phase 1 of card labels.
+Using the implement agent, build the complete card labels feature —
+all phases from the architecture spec.
 ```
 
-The implement agent should autonomously read the architecture spec, follow CLAUDE.md conventions, match existing code patterns, write unit tests, run the migration, and verify with lint/typecheck/test.
+The implement agent should autonomously read the architecture spec, work through all three phases (data layer → core UI → polish), follow CLAUDE.md conventions, match existing code patterns, write unit tests, run the migration, and verify with lint/typecheck/test after each phase.
 
 **Watch carefully** as it works. Things to catch:
 
@@ -577,59 +578,16 @@ npm test
 ls prisma/migrations/
 ```
 
-All must pass. `ls prisma/migrations/` should show a new directory for your feature.
+All must pass. `ls prisma/migrations/` should show a new directory for your feature. Open `http://localhost:3000` and manually check the feature works end-to-end.
 
-**Commit Phase 1:**
-
-```bash
-git add -A
-git commit -m "feat(<slug>): Phase 1 — data layer, API endpoints, unit tests"
-```
-
-### 3.2 · Implement Phase 2 — Core UI (10 min)
-
-```
-Using the implement agent, build Phase 2 of card labels.
-```
-
-The agent should read the architecture spec's Phase 2 section, build the frontend components, connect them to the API via the client, and add unit tests for new components.
-
-**Self-verify:**
-
-```bash
-npm run lint
-npm run typecheck
-npm test
-```
-
-Open `http://localhost:3000` in your browser and manually check the new UI elements work.
-
-**Commit Phase 2:**
+**Commit:**
 
 ```bash
 git add -A
-git commit -m "feat(<slug>): Phase 2 — core UI components"
+git commit -m "feat(<slug>): implement card labels (all phases)"
 ```
 
-### 3.3 · Implement Phase 3 — Polish (5 min)
-
-```
-Using the implement agent, build Phase 3 of card labels.
-```
-
-Phase 3 is typically polish: empty states, loading indicators, error handling, edge cases. Smaller than the other phases.
-
-**Self-verify and commit:**
-
-```bash
-npm run lint
-npm run typecheck
-npm test
-git add -A
-git commit -m "feat(<slug>): Phase 3 — polish and edge cases"
-```
-
-### 3.4 · AI code review (10 min)
+### 3.2 · AI code review (10 min)
 
 Now review the full implementation across all three phases:
 
@@ -649,7 +607,7 @@ Using the implement agent, fix the critical issues from the review:
 
 Then re-run the review agent to verify.
 
-### 3.5 · Security scan (10 min)
+### 3.3 · Security scan (10 min)
 
 ```
 Using the security agent, perform a security audit of the card labels
@@ -665,7 +623,7 @@ Using the implement agent, fix the security issues:
 <paste findings>
 ```
 
-### 3.6 · Cross-review (5 min)
+### 3.4 · Cross-review (5 min)
 
 Find a partner with a different feature:
 
@@ -681,9 +639,9 @@ Give one piece of feedback the AI review missed — usually a UX or architectura
 git checkout feature/card-labels
 ```
 
-### 3.7 · Lab 3 checkpoint
+### 3.5 · Lab 3 checkpoint
 
-- [ ] All 3 phases implemented: backend + UI + polish
+- [ ] All 3 phases implemented in a single pass: backend + UI + polish
 - [ ] Migration directory under `prisma/migrations/`
 - [ ] `npm run lint` / `typecheck` / `test` — all pass
 - [ ] Feature works visually at `http://localhost:3000`
@@ -691,7 +649,7 @@ git checkout feature/card-labels
 - [ ] Security agent: PASS (or all HIGH+ fixed)
 - [ ] One piece of human feedback received
 
-**Final Lab 3 commit** (if you have uncommitted fixes from review/security):
+**Commit** (if you have uncommitted fixes from review/security):
 
 ```bash
 git add -A
