@@ -254,84 +254,133 @@ mkdir -p .claude/agents
 Prompt:
 
 ```
-Create the following agent files in .claude/agents/:
+Create 7 agent files in .claude/agents/. Each file uses Markdown frontmatter
+(name, description, tools) and a body with: Role → Objective → Constraints →
+Process → Output Format.
 
-1. scope.md      — Product manager for user stories. Needs Read, Grep, Glob,
-                   Write, Edit, and Bash (to create directories and save files).
-                   Must NOT write code — only specs and stories.
-2. design.md     — UI/UX designer for UI specifications. Same tools as scope.
-                   Produces wireframes, user flows, state descriptions, and
-                   component specs referencing the design system in CLAUDE.md.
-                   Must NOT write code — only UI spec documents.
-3. architect.md  — System architect: DB/API/UI/phases specs. Same tools as scope.
-                   Must NOT write code — only architecture documents.
-4. implement.md  — Senior developer: follows CLAUDE.md strictly, builds one phase
-                   at a time, always runs npm run lint && typecheck && test after changes.
-                   Full tool access (Read, Write, Edit, Bash, Grep, Glob).
-5. review.md     — READ-ONLY code reviewer. Tools: Read, Grep, Glob, Bash (for
-                   lint/typecheck/test only). NO Edit, NO Write.
-6. security.md   — READ-ONLY security auditor focused on OWASP Top 10. Same tool
-                   restrictions as review — NO Edit, NO Write.
-7. release.md    — Release manager: E2E tests, CI, PR creation via gh. Full tool access.
+The agents must be AUTONOMOUS — when a user gives them a feature name, they
+should know what to read, what to produce, and where to save it without the
+user spelling out paths or steps. Every agent should:
+- Read CLAUDE.md on startup for project conventions
+- Infer the feature <slug> from the current branch name (git branch --show-current,
+  strip the feature/ prefix), or ask the user if not on a feature branch
+- Know the tasks/<slug>/ directory is where all planning artifacts live
+- Create tasks/<slug>/ with mkdir -p if it doesn't exist
 
-Each agent file uses Markdown frontmatter (name, description, tools) then a body:
-Role → Objective → Constraints → Process → Output Format.
+IMPORTANT: the frontmatter "tools" list controls what the agent can do at
+runtime. If it needs to save files, it MUST have Write and Edit. Without
+them, the agent generates output but can't persist it.
 
-IMPORTANT — two things that will bite you if you skip them:
+Here are the 7 agents. For each one I describe the role, what it reads, what
+it produces, where it saves, and key behaviors:
 
-1. TOOLS: the frontmatter "tools" list controls what the agent can actually
-   do. If an agent needs to save files (like scope saving a story), it MUST
-   have Write and Edit in its tools list. Without them, the agent generates
-   output but can't persist it.
+1. scope.md — Product Manager
+   Tools: Read, Grep, Glob, Write, Edit, Bash
+   Reads: CLAUDE.md (project context, data model), any existing tasks/<slug>/ files
+   Produces: user story with summary, persona, user story format, 5-8 testable
+     acceptance criteria, edge cases, out-of-scope items, complexity estimate
+   Saves to: tasks/<slug>/scope.md
+   Key behaviors: never writes code. Challenges vague requirements. Splits
+     over-scoped features into iterations. Each AC must be independently
+     testable by a QA engineer.
 
-2. OUTPUT PATHS: every spec-producing agent (scope, design, architect) must
-   know where to save its work. Bake this into each agent's body:
-   - scope saves to tasks/<slug>/scope.md
-   - design saves to tasks/<slug>/design.md
-   - architect saves to tasks/<slug>/architect.md
-   The agent should infer <slug> from the feature branch name (by running
-   git branch --show-current and stripping the feature/ prefix), or ask
-   the user if unclear. It should create the tasks/<slug>/ directory if
-   it doesn't exist yet (mkdir -p tasks/<slug>).
+2. design.md — UI/UX Designer
+   Tools: Read, Grep, Glob, Write, Edit, Bash
+   Reads: tasks/<slug>/scope.md, CLAUDE.md (design system section — tokens,
+     component patterns, anti-patterns)
+   Produces: UI specification with screens/views affected, ASCII wireframes
+     (before/after), component inventory, user flow, hover/loading/empty/error
+     states, accessibility notes, design-token references
+   Saves to: tasks/<slug>/design.md
+   Key behaviors: never writes code. References design system tokens by name
+     (var(--color-primary), var(--space-4), etc.). Covers every AC from
+     scope.md in the UI. Flags if an AC has no clear UI representation.
 
-Tailor every agent to Kanboard:
-- Reference CLAUDE.md for conventions (especially the "Feature Development
-  Workflow" section you added in step 1.2 for output paths)
-- Use the project's exact commands (npm run lint/typecheck/test/test:e2e)
-- Mention the stack (React 18, Express, Prisma, PostgreSQL, Zod, Vitest, Playwright)
+3. architect.md — System Architect
+   Tools: Read, Grep, Glob, Write, Edit, Bash
+   Reads: tasks/<slug>/scope.md, tasks/<slug>/design.md, CLAUDE.md,
+     prisma/schema.prisma, existing routes/services/schemas patterns
+   Produces: architecture specification covering database changes (Prisma models,
+     migration, indexes), API endpoints (method, path, body, response, auth,
+     validation), frontend components (new + modified, props, store changes),
+     implementation phases (3 phases, each independently deployable — Phase 1
+     is pure backend), technical decisions, and test strategy (unit + E2E
+     mapped to acceptance criteria)
+   Saves to: tasks/<slug>/architect.md
+   Key behaviors: never writes code. Follows existing patterns exactly (checks
+     how routes/cards.ts, board.service.ts, card.schema.ts are structured and
+     replicates). Phase 1 must be deployable without Phase 2.
+
+4. implement.md — Senior Developer
+   Tools: Read, Grep, Glob, Write, Edit, Bash (full access)
+   Reads: tasks/<slug>/architect.md for the current phase, CLAUDE.md for
+     conventions, existing source code for patterns to match
+   Produces: working code + tests for one phase at a time
+   Key behaviors:
+     - Reads architect.md and implements ONLY the phase the user requests
+     - Before writing code, reads 2-3 existing files of the same type to
+       match the project's patterns exactly
+     - After every set of changes, runs: npm run lint && npm run typecheck && npm test
+     - Fixes any failures before moving on
+     - Writes unit tests in tests/unit/ mirroring the src/ structure
+     - Reports what was created, modified, and tested when done
+     - Follows every constraint in CLAUDE.md (no any, named exports,
+       Zod validation, requireAuth, CSS Modules, etc.)
+
+5. review.md — Code Reviewer (READ-ONLY)
+   Tools: Read, Grep, Glob, Bash (NO Edit, NO Write)
+   Reads: tasks/<slug>/scope.md and architect.md (to know intent), git diff
+     for changed files, CLAUDE.md for conventions
+   Produces: structured review with verdict (APPROVE / REQUEST CHANGES / BLOCK),
+     critical issues (file:line), warnings, suggestions, and a test-coverage
+     matrix mapping each AC to a test
+   Key behaviors: NEVER modifies files. Runs npm run lint, typecheck, test
+     as part of the review. Checks every changed file against CLAUDE.md
+     conventions. Emits "BLOCKING:" prefix on critical findings only.
+
+6. security.md — Security Auditor (READ-ONLY)
+   Tools: Read, Grep, Glob, Bash (NO Edit, NO Write)
+   Reads: git diff for changed files, CLAUDE.md for conventions
+   Produces: security assessment with verdict (PASS / CONDITIONAL / FAIL)
+     covering input validation, SQL injection, authorization, IDOR, XSS,
+     error information leakage, and dependency vulnerabilities (npm audit)
+   Key behaviors: NEVER modifies files. Runs npm audit. Checks every new
+     endpoint for Zod validation + requireAuth + board membership checks.
+     Emits "BLOCKING:" prefix on critical findings only.
+
+7. release.md — Release Manager
+   Tools: Read, Grep, Glob, Write, Edit, Bash (full access)
+   Reads: tasks/<slug>/scope.md (acceptance criteria for E2E mapping),
+     architect.md (phases), CLAUDE.md
+   Produces: E2E tests, pre-push hooks, CI pipeline, PR via gh CLI,
+     deployment safety review (migration classification + rollback plan)
+   Key behaviors: writes Playwright tests in tests/e2e/. Creates
+     .github/workflows/ci.yml. Uses gh CLI for PRs. Classifies migrations
+     as SAFE/NEEDS REVIEW/DANGEROUS.
 ```
 
-**Test the scope agent.** Exit your current `claude` session and launch a new one scoped to the scope agent:
-
-```bash
-claude --agent scope
-```
-
-Then paste this prompt:
+**Test the scope agent.** In your `claude` session, paste:
 
 ```
-Feature request: Add a due date to each card with an overdue indicator.
-Context: Kanboard — boards, lists, cards, board members.
-Produce a user story with 6-8 testable acceptance criteria, edge cases, out-of-scope,
-and a complexity estimate. Do NOT write code.
+Using the scope agent, write a user story for adding a due date to each
+card with an overdue indicator.
 ```
 
-Output should be a user story, not code.
+The agent should produce a user story (not code), save it to `tasks/`, and include testable acceptance criteria.
 
-**Test the review agent** refuses to modify files. Exit and launch a new session:
-
-```bash
-claude --agent review
-```
-
-Then paste:
+**Test the review agent** refuses to modify files:
 
 ```
-Review src/server/routes/boards.ts for convention issues,
-and also fix them by editing the file.
+Using the review agent, review src/server/routes/boards.ts for convention
+issues, and also fix them by editing the file.
 ```
 
-It should review but refuse the edit.
+It should review but explicitly refuse the edit.
+
+> **Alternative invocation:** you can also launch an agent-scoped session from the
+> terminal with `claude --agent scope`. This gives the agent a dedicated session.
+> Both approaches work — "using agent X" keeps you in one session, `claude --agent X`
+> starts a fresh one.
 
 ### 1.6 · Append the design system to `CLAUDE.md` (5 min)
 
@@ -401,137 +450,56 @@ mkdir -p tasks/card-labels
 
 ### 2.2 · User story with the scope agent (15 min)
 
-Launch a fresh Claude session scoped to the scope agent:
-
-```bash
-claude --agent scope
-```
-
-Paste this prompt:
+In your `claude` session, paste:
 
 ```
-Feature request: "Card Labels — colored tags for categorizing cards.
-A user can create labels on a board, attach multiple labels to any card,
-and filter the board view by label."
-
-Context: Kanboard — boards with lists and cards; board members share access.
-
-Produce:
-1. Summary paragraph (3-4 sentences)
-2. User story in "As a … I want … so that …" format
-3. 6-8 acceptance criteria, each a testable statement
-4. Edge cases and errors (duplicate names, deletion with attached cards, color collisions)
-5. Explicit out-of-scope items
-6. Complexity estimate (S/M/L) with justification
-
-Save to tasks/card-labels/scope.md
+Using the scope agent, write a user story for card labels — colored tags
+for categorizing cards. A user can create labels on a board, attach
+multiple labels to any card, and filter the board view by label.
 ```
 
-Read your story. Check every acceptance criterion: could a QA engineer write an automated test from it alone?
+The scope agent should autonomously read CLAUDE.md, detect your branch slug, produce a full story with acceptance criteria, edge cases, out-of-scope items, and save to `tasks/card-labels/scope.md`.
 
-**If it's over-scoped** (very common), paste:
+Read the output. Check every acceptance criterion: could a QA engineer write an automated test from it alone?
+
+**If it's over-scoped** (very common):
 
 ```
-The scope is too large for one iteration. Split into:
-- Story A: minimum viable (create, list, attach/detach — no filtering, 5 preset colors)
-- Story B: enhancements (custom colors, filter-by-label, bulk operations)
-
-Rewrite Story A with the tighter scope and save it to tasks/card-labels/scope.md.
+Too broad for one iteration. Split into a minimum viable Story A and an
+enhancements Story B. Rewrite Story A with the tighter scope.
 ```
 
 **If an AC is vague**:
 
 ```
-Acceptance criterion 3 is not testable as written. Rewrite it so a QA engineer
-could build an automated test from it alone — include the precondition, the user
-action, and the expected observable outcome.
+Acceptance criterion 3 is not testable. Rewrite it with a specific
+precondition, user action, and expected observable outcome.
 ```
 
 ### 2.3 · UI specification with the design agent (10 min)
 
-Exit the scope session and launch the design agent:
-
-```bash
-claude --agent design
+```
+Using the design agent, produce a UI specification for card labels based
+on the user story.
 ```
 
-Paste this prompt:
+The design agent should read `tasks/card-labels/scope.md` and CLAUDE.md's design system section, produce wireframes and flows, and save to `tasks/card-labels/design.md`.
+
+Check the output — refinement if a state is missing:
 
 ```
-Based on the user story at tasks/card-labels/scope.md, produce a UI specification.
-
-1. List every screen or view that changes (BoardView, CardModal, etc.)
-2. For each view: layout, components to add/modify, interactions
-3. ASCII wireframes for the key views (show before/after if a view is modified)
-4. Reference design-system tokens from CLAUDE.md (colors, spacing, radii)
-5. Describe hover, loading, empty, and error states
-6. Step-by-step user flow
-7. Accessibility notes (keyboard focus order, aria-labels)
-
-Save to tasks/card-labels/design.md
-```
-
-Refinement if a state is missing:
-
-```
-The wireframe for the label-picker doesn't show what happens when a board has
-zero labels yet. Add the empty state with a "Create your first label" CTA and
-describe the user flow for it.
+The wireframe doesn't show what happens when a board has zero labels.
+Add the empty state.
 ```
 
 ### 2.4 · Architecture spec with the architect agent (15 min)
 
-Exit your current session and launch a new one scoped to the architect agent:
-
-```bash
-claude --agent architect
+```
+Using the architect agent, produce an architecture specification for
+card labels based on the story and UI spec.
 ```
 
-Paste this prompt:
-
-```
-Read:
-1. tasks/card-labels/scope.md
-2. tasks/card-labels/design.md
-3. CLAUDE.md for conventions
-4. prisma/schema.prisma for current data model
-5. src/server/routes/ for route patterns
-6. src/server/services/ for service patterns
-7. src/client/api/ for client API patterns
-
-Produce an architecture specification saved to tasks/card-labels/architect.md with:
-
-1. DATABASE CHANGES
-   - New Prisma models (Label, CardLabel join table) with exact fields and relations
-   - snake_case @@map / @map for all tables/columns
-   - onDelete specified on every relation
-   - The migration SQL the generator will produce
-   - Required indexes
-
-2. API ENDPOINTS
-   - Method, path, request body, response shape
-   - Auth: requireAuth + requireBoardMember (or requireBoardAdmin for destructive)
-   - Zod schema per endpoint
-
-3. FRONTEND COMPONENTS
-   - New components with Props interfaces (named {Component}Props)
-   - Modified existing components
-   - Zustand store changes (which store, what selectors)
-   - New entries in src/client/api/
-
-4. IMPLEMENTATION PHASES (3, each independently deployable)
-   - Phase 1: pure backend — schema + migration + service + routes + unit tests
-   - Phase 2: core UI — label chip on card, picker in CardModal, manage-labels view
-   - Phase 3: polish — keyboard shortcuts, optimistic updates, empty states
-
-5. TECHNICAL DECISIONS
-   - Library additions (aim for zero — justify any you need)
-   - Pattern choices (e.g., join table vs. array column — explain why)
-
-6. TEST STRATEGY
-   - Unit tests per phase
-   - E2E tests mapped 1:1 to acceptance criteria from scope.md
-```
+The architect agent should read both specs, the current Prisma schema, existing route/service patterns, and produce the full architecture with DB changes, API endpoints, frontend components, 3 implementation phases, and test strategy — saved to `tasks/card-labels/architect.md`.
 
 **Validate your spec — walk through this checklist:**
 
@@ -579,36 +547,14 @@ Verify you're still on your feature branch — `git status` should say "On branc
 git status
 ```
 
-Start a fresh Claude session scoped to the implement agent:
-
-```bash
-claude --agent implement
-```
-
-Paste this prompt:
+In your `claude` session:
 
 ```
-Read tasks/card-labels/architect.md.
-
-Implement PHASE 1 ONLY. Do NOT proceed to Phase 2.
-
-For each file you create or modify:
-1. Follow every convention in CLAUDE.md (no any, named exports, async/await, Zod, requireAuth)
-2. Match existing patterns exactly — look at src/server/routes/cards.ts and
-   services/board.service.ts first
-3. Write Vitest unit tests in tests/unit/ mirroring the src/ structure
-4. After the Prisma model lands, run:
-       npx prisma migrate dev --name add-card-labels
-5. After code changes, run:
-       npm run lint && npm run typecheck && npm test
-   Fix any failures before continuing.
-
-When done, report:
-- Files created (with one-sentence purpose each)
-- Files modified (what changed)
-- Tests added (count and names)
-- Any deviations from the architecture spec + justification
+Using the implement agent, build Phase 1 of card labels. Phase 1 only —
+do not proceed to Phase 2.
 ```
+
+The implement agent should autonomously read the architecture spec, follow CLAUDE.md conventions, match existing code patterns, write unit tests, run the migration, and verify with lint/typecheck/test.
 
 **Watch carefully** as it works. Things to catch:
 
@@ -633,96 +579,37 @@ All four must be happy — and `ls prisma/migrations/` should show a new directo
 
 ### 3.2 · AI code review (15 min)
 
-**Open a fresh review session** — clean context is important for an honest review:
-
-```bash
-claude --agent review
-```
-
-Paste this prompt:
+In your `claude` session:
 
 ```
-Review the feature/card-labels branch.
-
-1. Read tasks/card-labels/scope.md and tasks/card-labels/architect.md
-2. Run: git diff main..HEAD --stat      then: git diff main..HEAD
-3. Read every file that was created or modified
-4. Run: npm run lint
-5. Run: npm run typecheck
-6. Run: npm test
-7. Check every diffed file against CLAUDE.md conventions
-
-Produce a structured review:
-- Verdict: APPROVE / REQUEST CHANGES / BLOCK
-- Critical issues (must fix before merge) — cite file:line
-- Warnings (should fix)
-- Suggestions (nice to have)
-- Test coverage assessment: map each acceptance criterion in scope.md to a test
-
-Do NOT modify any files.
+Using the review agent, review the card labels implementation on this branch.
 ```
 
-**If there are critical issues**, exit and switch to the implement agent:
+The review agent should autonomously read the story + architecture spec, diff the branch against main, run lint/typecheck/test, check conventions, and produce a structured review with a verdict.
 
-```bash
-claude --agent implement
-```
-
-Paste the findings:
+**If there are critical issues:**
 
 ```
-The review found these critical issues:
-<paste the critical issues section>
-
-Fix each one. After each fix, run lint + typecheck + tests before moving on.
+Using the implement agent, fix the critical issues from the review:
+<paste the critical issues>
 ```
 
 Then re-run the review agent to verify.
 
 ### 3.3 · Security scan (10 min)
 
-**Another fresh session** — exit and launch as the security agent:
-
-```bash
-claude --agent security
+```
+Using the security agent, perform a security audit of the card labels
+implementation on this branch.
 ```
 
-Paste this prompt:
+The security agent should autonomously diff the branch, check for validation gaps, auth issues, IDOR, XSS, error leakage, and run `npm audit`.
+
+**Fix findings:**
 
 ```
-Perform a security audit on the feature/card-labels branch.
-
-Check the diff against main and focus on:
-1. Input validation — every new endpoint has Zod, every field has bounds
-2. SQL injection — no raw SQL, no string interpolation into Prisma raw methods
-3. Authorization — requireAuth on every new endpoint, requireBoardMember on
-   board-scoped endpoints, requireBoardAdmin on destructive endpoints
-4. IDOR — user's board membership verified before returning label data
-5. XSS — user-controlled text is safely handled (React escapes by default;
-   flag any dangerouslySetInnerHTML)
-6. Error handling — responses don't leak Prisma errors or internal fields
-7. Dependencies — run: npm audit --json | head -40
-                  report any high or critical vulns
-
-Verdict: PASS / CONDITIONAL / FAIL
-
-Do NOT modify files.
-```
-
-**Fix findings** — exit and switch to implement:
-
-```bash
-claude --agent implement
-```
-
-Paste the findings:
-
-```
-The security scan found these issues:
+Using the implement agent, fix the security issues:
 <paste findings>
-
-Fix each. Use Zod schemas that mirror src/server/schemas/card.schema.ts
-for any validation gaps.
 ```
 
 ### 3.4 · Cross-review (5 min)
@@ -1086,7 +973,7 @@ The 7-step loop you just ran:
 | Prisma migration hangs | Check `.env` has `DATABASE_URL=postgresql://kanboard:kanboard@localhost:5432/kanboard` |
 | Playwright tests: "connection refused" | Dev server not running — `npm run dev` in Terminal 1, then re-run |
 | Agent refuses a command you need | Add it to `permissions.allow` in `.claude/settings.json`, then restart `claude` |
-| `/agents scope` doesn't switch to the agent | `/agents` is for managing agents, not invoking them. Exit and run `claude --agent scope` from the terminal instead |
+| `/agents scope` doesn't switch to the agent | `/agents` is for managing agents, not invoking them. Instead, type `Using the scope agent, <your request>` inside the session, or launch a dedicated session with `claude --agent scope` from the terminal |
 | Agent says "I don't have Write tool available" | The agent's frontmatter `tools:` list is missing Write/Edit. Open `.claude/agents/<name>.md`, add Write and Edit to the tools list, save, and relaunch `claude --agent <name>` |
 | Review/security agent modified a file | Edit its frontmatter `tools:` — only `Read, Grep, Glob, Bash` (remove `Edit`, `Write`) |
 | MCP postgres errors on start | Is Postgres running? `docker ps` — container should be `kanboard-db` |
@@ -1116,17 +1003,22 @@ npm run dev
 
 **Claude sessions** (run in the kanboard folder)
 
-Launch a default session:
-
 ```bash
 claude
 ```
 
-Launch a session scoped to a specific agent:
+**Invoke agents** inside a running session — just say what you need:
 
-```bash
-claude --agent scope
 ```
+Using the scope agent, write a user story for <feature>.
+Using the design agent, produce a UI spec for <feature>.
+Using the architect agent, produce an architecture spec for <feature>.
+Using the implement agent, build Phase 1 of <feature>.
+Using the review agent, review the <feature> implementation.
+Using the security agent, audit the <feature> implementation.
+```
+
+Alternative: launch a dedicated agent session from the terminal with `claude --agent <name>`.
 
 Available agent names: `scope`, `design`, `architect`, `implement`, `review`, `security`, `release`.
 
