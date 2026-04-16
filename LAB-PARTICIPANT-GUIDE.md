@@ -13,6 +13,8 @@ Welcome. This is your copy-paste handbook for the 4-hour lab block. Work through
 
 All lab examples use `card-labels` as the feature slug. You'll pick your own feature in Lab 2 — just replace `card-labels` with your slug everywhere.
 
+**Your personal branch:** Everyone works off their own branch so we don't get conflicting commits. Use your name or initials as a prefix — e.g. `workshop/joao`, `workshop/maria`. You'll create this in step 0.2 below.
+
 ---
 
 ## 0 · Pre-flight (10 min, do this first)
@@ -29,16 +31,17 @@ gh --version
 
 Required versions: Node ≥ 20, npm ≥ 10, Claude Code ≥ 1.x. Missing or too old? Flag it to the instructor now.
 
-### 0.2 · Clone and enter the practice repo
+### 0.2 · Clone and create your personal branch
 
 ```bash
 git clone https://github.com/joaosp/kanboard.git
 cd kanboard
 git checkout workshop-practice
+git checkout -b workshop/YOUR-NAME
 npm install
 ```
 
-`workshop-practice` is the pristine starter branch. It has the app code but no `CLAUDE.md`, no `.claude/`, no CI. You'll add those today.
+Replace `YOUR-NAME` with your name or initials (e.g. `workshop/joao`). This branches off the pristine starter so everyone starts with the same baseline but pushes to their own branch. All Lab 1 commits go here. In Lab 2 you'll branch again for your feature (`feature/card-labels`).
 
 ### 0.3 · Bring up the database + dev server
 
@@ -445,8 +448,9 @@ Replace `card-labels` below with your chosen slug everywhere it appears.
 
 ```bash
 git checkout -b feature/card-labels
-mkdir -p tasks/card-labels
 ```
+
+This branches off your personal `workshop/YOUR-NAME` branch, so it inherits all your Lab 1 work. The agents will create `tasks/card-labels/` automatically when they save their first file.
 
 ### 2.2 · User story with the scope agent (15 min)
 
