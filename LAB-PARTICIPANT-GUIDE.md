@@ -20,14 +20,14 @@ All lab examples use `card-labels` as the feature slug. You'll pick your own fea
 ### 0.1 · Check your toolchain
 
 ```bash
-node --version       # need >= 20
-npm --version        # need >= 10
-claude --version     # need >= 1.x
+node --version
+npm --version
+claude --version
 docker --version
 gh --version
 ```
 
-Missing something? Flag it to the instructor now.
+Required versions: Node ≥ 20, npm ≥ 10, Claude Code ≥ 1.x. Missing or too old? Flag it to the instructor now.
 
 ### 0.2 · Clone and enter the practice repo
 
@@ -43,11 +43,13 @@ npm install
 ### 0.3 · Bring up the database + dev server
 
 ```bash
-docker compose up -d        # Postgres 16 on localhost:5432
-npm run db:migrate          # apply existing Prisma migrations
-npm run db:seed             # seed demo users + boards
-npm run dev                 # dev server (keep this terminal open)
+docker compose up -d
+npm run db:migrate
+npm run db:seed
+npm run dev
 ```
+
+That brings up Postgres 16 on `localhost:5432`, applies the existing Prisma migrations, seeds demo users and boards, and starts the dev server. Keep this terminal open for the whole lab.
 
 Open `http://localhost:3000`. Log in:
 
@@ -62,10 +64,12 @@ In a **new terminal** (keep the dev server running in the first one):
 
 ```bash
 cd kanboard
-npm run lint           # 0 errors (some no-console warnings are OK)
-npm run typecheck      # silent = pass
-npm test               # 33 tests pass
+npm run lint
+npm run typecheck
+npm test
 ```
+
+Expected: `npm run lint` reports 0 errors (some `no-console` warnings are fine), `npm run typecheck` produces no output, `npm test` shows 33 passing tests.
 
 All four terminals you'll want open today:
 
@@ -198,10 +202,9 @@ Should refuse or ask for approval.
 
 ### 1.4 · Connect the Postgres MCP server (5 min)
 
-MCP servers do **not** live in `.claude/settings.json` — they go in a project-level `.mcp.json`. The cleanest way to create it is the CLI:
+MCP servers do **not** live in `.claude/settings.json` — they go in a project-level `.mcp.json`. The cleanest way to create it is the CLI. Open a new terminal in the kanboard folder and run:
 
 ```bash
-# in a new terminal, in the kanboard folder
 claude mcp add postgres -s project -- npx -y @modelcontextprotocol/server-postgres postgresql://kanboard:kanboard@localhost:5432/kanboard
 ```
 
@@ -347,8 +350,10 @@ Now pick a feature and run it through three planning agents. You'll produce thre
 
 **Don't pick the same feature as your immediate neighbor** — you'll cross-review each other later.
 
+Replace `card-labels` below with your chosen slug everywhere it appears.
+
 ```bash
-git checkout -b feature/card-labels          # replace card-labels with your slug
+git checkout -b feature/card-labels
 mkdir -p tasks/card-labels
 ```
 
@@ -514,10 +519,10 @@ Time to write code. You'll build **only Phase 1** (backend) using the `implement
 
 ### 3.1 · Implement Phase 1 (30 min)
 
-Verify you're still on your feature branch:
+Verify you're still on your feature branch — `git status` should say "On branch feature/card-labels":
 
 ```bash
-git status          # should say "On branch feature/card-labels"
+git status
 ```
 
 Start a fresh Claude session for this exercise:
@@ -569,10 +574,10 @@ When done, report:
 npm run lint
 npm run typecheck
 npm test
-ls prisma/migrations/        # new migration directory present?
+ls prisma/migrations/
 ```
 
-All four must be happy.
+All four must be happy — and `ls prisma/migrations/` should show a new directory whose name ends in `_add_card_labels` (or your slug).
 
 ### 3.2 · AI code review (15 min)
 
@@ -764,13 +769,15 @@ Rules:
 5. Descriptive names. At least one expect() per test.
 ```
 
-**Run the tests:**
+**Run the tests** (dev server must be running in Terminal 1):
 
 ```bash
-# dev server must be running (Terminal 1)
 npx playwright test tests/e2e/card-labels.spec.ts
+```
 
-# if something fails, debug:
+If something fails, debug interactively:
+
+```bash
 npx playwright test --debug tests/e2e/card-labels.spec.ts
 ```
 
@@ -977,26 +984,27 @@ git push origin feature/card-labels
 
 On `feature/<slug>`:
 
-```
-CLAUDE.md                                    # Lab 1
-.claude/settings.json                        # Lab 1
-.claude/agents/                              # Lab 1 — six agents
-tasks/<slug>/scope.md                        # Lab 2
-tasks/<slug>/design.md                       # Lab 2
-tasks/<slug>/architect.md                    # Lab 2
-src/server/routes/<slug>.ts                  # Lab 3
-src/server/services/<slug>.service.ts        # Lab 3
-src/server/schemas/<slug>.schema.ts          # Lab 3
-prisma/schema.prisma                         # modified
-prisma/migrations/…_add_<slug>/              # Lab 3
-tests/unit/services/<slug>.service.test.ts   # Lab 3
-tests/e2e/<slug>.spec.ts                     # Lab 4
-tests/e2e/fixtures/test-helpers.ts           # Lab 4
-scripts/hooks/pre-push                       # Lab 4
-scripts/setup-hooks.sh                       # Lab 4
-.github/workflows/ci.yml                     # Lab 4
-Open PR on GitHub                            # Lab 4
-```
+| Lab | Artifact |
+|-----|----------|
+| 1 | `CLAUDE.md` |
+| 1 | `.claude/settings.json` |
+| 1 | `.mcp.json` |
+| 1 | `.claude/agents/{scope,architect,implement,review,security,release}.md` |
+| 2 | `tasks/<slug>/scope.md` |
+| 2 | `tasks/<slug>/design.md` |
+| 2 | `tasks/<slug>/architect.md` |
+| 3 | `src/server/routes/<slug>.ts` |
+| 3 | `src/server/services/<slug>.service.ts` |
+| 3 | `src/server/schemas/<slug>.schema.ts` |
+| 3 | `prisma/schema.prisma` (modified) |
+| 3 | `prisma/migrations/…_add_<slug>/` |
+| 3 | `tests/unit/services/<slug>.service.test.ts` |
+| 4 | `tests/e2e/<slug>.spec.ts` |
+| 4 | `tests/e2e/fixtures/test-helpers.ts` |
+| 4 | `scripts/hooks/pre-push` |
+| 4 | `scripts/setup-hooks.sh` |
+| 4 | `.github/workflows/ci.yml` |
+| 4 | Open PR on GitHub |
 
 The 7-step loop you just ran:
 
@@ -1042,40 +1050,84 @@ The 7-step loop you just ran:
 
 ## Copy-paste cheat sheet
 
+Every block below is self-contained — paste one at a time.
+
+**Startup**
+
 ```bash
-# Startup
 cd kanboard
 git checkout workshop-practice
 npm install
 docker compose up -d
-npm run db:migrate && npm run db:seed
+npm run db:migrate
+npm run db:seed
 npm run dev
+```
 
-# Claude sessions
+**Claude sessions** (run in the kanboard folder)
+
+```bash
 claude
-/agents scope        # or architect / implement / review / security / release
-/mcp                 # show connected MCP servers
+```
 
-# Add the postgres MCP server (writes .mcp.json, requires claude restart)
+Inside a running `claude` session, switch agents or check MCP:
+
+```
+/agents scope
+```
+
+```
+/mcp
+```
+
+Available agent names: `scope`, `architect`, `implement`, `review`, `security`, `release`.
+
+**Add the postgres MCP server** (writes `.mcp.json`; restart `claude` after)
+
+```bash
 claude mcp add postgres -s project -- npx -y @modelcontextprotocol/server-postgres postgresql://kanboard:kanboard@localhost:5432/kanboard
+```
 
-# Self-verify loop (run this a lot)
-npm run lint && npm run typecheck && npm test
+**Self-verify loop** (run this a lot)
 
-# E2E
+```bash
+npm run lint
+npm run typecheck
+npm test
+```
+
+**E2E**
+
+```bash
 npx playwright test
-npx playwright test --debug path/to/spec.ts
+```
 
-# Git flow
+```bash
+npx playwright test --debug path/to/spec.ts
+```
+
+**Git flow**
+
+```bash
 git checkout -b feature/<slug>
 git add -A
-git commit -m "…"
+git commit -m "message"
 git push origin feature/<slug>
-gh pr create --title "…" --body "…"
-gh pr view --web
+```
 
-# Reset if needed
-git checkout workshop-practice && git clean -fd && npm install
+**Pull request**
+
+```bash
+gh pr create --title "title" --body "body"
+gh pr view --web
+```
+
+**Full reset if something breaks**
+
+```bash
+git checkout workshop-practice
+git clean -fd
+npm install
 ```
 
 Good luck — and ask questions loudly.
