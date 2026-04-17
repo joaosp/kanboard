@@ -385,7 +385,7 @@ It should review but explicitly refuse the edit.
 > Both approaches work — "using agent X" keeps you in one session, `claude --agent X`
 > starts a fresh one.
 
-### 1.6 · Append the design system to `CLAUDE.md` (5 min)
+### 1.6 · Extract design system to `design-system.md` (5 min)
 
 ```
 Analyze the frontend design system in this project:
@@ -394,7 +394,7 @@ Analyze the frontend design system in this project:
 3. Look at Button, Input, Modal, Card components for token usage patterns
 4. Check vite.config.ts for CSS Modules configuration
 
-APPEND a new "## Design System" section to CLAUDE.md with:
+Create a new file under design-system.md with:
 - Color tokens (names and hex values)
 - Typography (families, sizes, weights)
 - Spacing scale
@@ -405,6 +405,8 @@ APPEND a new "## Design System" section to CLAUDE.md with:
 - Anti-patterns (no inline styles, no hardcoded colors, no global selectors)
 
 Do NOT overwrite existing content — append only.
+
+Then reference this file under CLAUDE.md and our design agent for everything that is design related
 ```
 
 ### 1.7 · Lab 1 checkpoint
