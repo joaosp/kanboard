@@ -1,5 +1,6 @@
 import { User } from './user';
 import { List } from './list';
+import { Label } from './label';
 
 export interface Board {
   id: string;
@@ -8,6 +9,7 @@ export interface Board {
   updatedAt: string;
   members?: BoardMember[];
   lists?: List[];
+  labels?: Label[];
 }
 
 export interface BoardMember {

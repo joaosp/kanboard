@@ -12,13 +12,22 @@ async function getUserBoards(userId: string) {
 }
 
 async function getBoardById(boardId: string) {
-  return prisma.board.findUnique({
+  const board = await prisma.board.findUnique({
     where: { id: boardId },
     include: {
+      labels: { orderBy: { createdAt: 'asc' } },
       lists: {
         orderBy: { position: 'asc' },
         include: {
-          cards: { orderBy: { position: 'asc' } },
+          cards: {
+            orderBy: { position: 'asc' },
+            include: {
+              cardLabels: {
+                orderBy: { createdAt: 'asc' },
+                include: { label: true },
+              },
+            },
+          },
         },
       },
       members: {
@@ -26,6 +35,22 @@ async function getBoardById(boardId: string) {
       },
     },
   });
+
+  if (!board) return board;
+
+  return {
+    ...board,
+    lists: board.lists.map((list) => ({
+      ...list,
+      cards: list.cards.map((card) => {
+        const { cardLabels, ...rest } = card;
+        return {
+          ...rest,
+          labels: cardLabels.map((cl) => cl.label),
+        };
+      }),
+    })),
+  };
 }
 
 async function createBoard(name: string, userId: string) {

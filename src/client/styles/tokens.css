@@ -57,4 +57,39 @@
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
+
+  /* Drag-and-drop */
+  --shadow-drag: 0 20px 25px -5px rgb(0 0 0 / 0.2), 0 10px 10px -5px rgb(0 0 0 / 0.1);
+  --rotation-drag: -2deg;
+  --scale-drag: 1.03;
+  --z-drag-overlay: 300;
+  --opacity-ghost: 0.4;
+
+  /* Label palette — six slots. Each slot ships as {slot, slot-on, slot-ink}. */
+  --color-label-red:        #dc2626;
+  --color-label-red-on:     var(--color-text-inverse);
+  --color-label-red-ink:    #991b1b;
+
+  --color-label-amber:      #f59e0b;
+  --color-label-amber-on:   var(--color-text);
+  --color-label-amber-ink:  #92400e;
+
+  --color-label-green:      #16a34a;
+  --color-label-green-on:   var(--color-text);
+  --color-label-green-ink:  #166534;
+
+  --color-label-blue:       #2563eb;
+  --color-label-blue-on:    var(--color-text-inverse);
+  --color-label-blue-ink:   #1e40af;
+
+  --color-label-purple:     #7c3aed;
+  --color-label-purple-on:  var(--color-text-inverse);
+  --color-label-purple-ink: #5b21b6;
+
+  --color-label-slate:      #475569;
+  --color-label-slate-on:   var(--color-text-inverse);
+  --color-label-slate-ink:  #334155;
+
+  /* Subtle translucent overlay (used by label chip remove hover, etc.) */
+  --color-overlay-subtle: rgba(0, 0, 0, 0.15);
 }

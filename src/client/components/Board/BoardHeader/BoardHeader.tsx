@@ -1,6 +1,7 @@
 import { useState, KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useBoardsStore } from '../../../stores/boards';
+import { useUiStore } from '../../../stores/ui';
 import { Board } from '../../../types';
 import styles from './BoardHeader.module.css';
 
@@ -12,6 +13,7 @@ export function BoardHeader({ board }: BoardHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(board.name);
   const updateBoard = useBoardsStore((s) => s.updateBoard);
+  const openModal = useUiStore((s) => s.openModal);
 
   const handleSave = async () => {
     if (name.trim() && name.trim() !== board.name) {
@@ -58,6 +60,16 @@ export function BoardHeader({ board }: BoardHeaderProps) {
             </button>
           </>
         )}
+      </div>
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.manageLabelsButton}
+          onClick={() => openModal(`labels:${board.id}`)}
+          data-testid="manage-labels-button"
+        >
+          Manage labels
+        </button>
       </div>
     </div>
   );

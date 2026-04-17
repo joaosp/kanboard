@@ -1,0 +1,19 @@
+.zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: var(--space-3);
+  border: 2px dashed var(--color-primary);
+  background-color: var(--color-primary-light);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.zoneOver {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-hover);
+}

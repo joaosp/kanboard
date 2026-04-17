@@ -5,6 +5,7 @@ import { authRouter } from './routes/auth';
 import { boardsRouter } from './routes/boards';
 import { listsRouter } from './routes/lists';
 import { cardsRouter } from './routes/cards';
+import { labelsRouter } from './routes/labels';
 import { errorHandler } from './middleware/errors';
 
 const app = express();
@@ -20,6 +21,8 @@ app.use('/api/boards', listsRouter);
 app.use('/api', listsRouter);
 app.use('/api/lists', cardsRouter);
 app.use('/api', cardsRouter);
+app.use('/api/boards', labelsRouter);
+app.use('/api', labelsRouter);
 app.use(errorHandler);
 
 app.listen(PORT, () => {

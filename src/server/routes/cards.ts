@@ -3,7 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { validate, validateParams } from '../middleware/validate';
 import { createCardSchema, updateCardSchema, cardParamsSchema, cardListParamsSchema } from '../schemas/card.schema';
-import { createCard, getCardById, updateCard, deleteCard } from '../services/card.service';
+import { createCard, getCardById, updateCard, moveCard, deleteCard } from '../services/card.service';
 import { prisma } from '../prisma';
 import { createAppError } from '../middleware/errors';
 
@@ -61,7 +61,44 @@ router.patch('/cards/:id', requireAuth, validateParams(cardParamsSchema), valida
     });
     if (!member) throw createAppError('Not a member of this board', 403);
 
-    const updated = await updateCard(cardId, req.body);
+    const body = req.body as {
+      title?: string;
+      description?: string | null;
+      position?: number;
+      listId?: string;
+    };
+
+    const isCrossListMove = body.listId !== undefined && body.listId !== card.list.id;
+
+    if (isCrossListMove) {
+      const targetList = await prisma.list.findUnique({ where: { id: body.listId! } });
+      if (!targetList) throw createAppError('Target list not found', 404);
+      if (targetList.boardId !== card.list.boardId) {
+        throw createAppError('Cannot move card across boards', 409);
+      }
+
+      // Re-check membership on the target board (same board today; future-proof against cross-board moves).
+      const targetMember = await prisma.boardMember.findUnique({
+        where: { boardId_userId: { boardId: targetList.boardId, userId: req.user!.id } },
+      });
+      if (!targetMember) throw createAppError('Not a member of this board', 403);
+
+      const position = body.position ?? 0;
+      await moveCard(cardId, { listId: body.listId, position });
+      const updated = await getCardById(cardId);
+      res.json({ data: updated });
+      return;
+    }
+
+    if (body.position !== undefined) {
+      await moveCard(cardId, { position: body.position });
+      const updated = await getCardById(cardId);
+      res.json({ data: updated });
+      return;
+    }
+
+    const { position: _position, listId: _listId, ...rest } = body;
+    const updated = await updateCard(cardId, rest);
     res.json({ data: updated });
   } catch (err) {
     next(err);

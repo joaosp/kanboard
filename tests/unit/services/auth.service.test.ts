@@ -18,8 +18,13 @@ vi.mock('bcryptjs', () => ({
   compare: mockCompare,
 }));
 
+const { mockSign } = vi.hoisted(() => ({ mockSign: vi.fn() }));
+vi.mock('jsonwebtoken', () => ({
+  default: { sign: mockSign, verify: vi.fn() },
+}));
+
 import { prisma } from '../../../src/server/prisma';
-import { registerUser, loginUser } from '../../../src/server/services/auth.service';
+import { registerUser, loginUser, generateToken } from '../../../src/server/services/auth.service';
 
 describe('auth.service', () => {
   beforeEach(() => {
@@ -112,6 +117,25 @@ describe('auth.service', () => {
       const result = await loginUser({ email: 'nobody@example.com', password: 'pass' });
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('generateToken', () => {
+    beforeAll(() => {
+      process.env.JWT_SECRET = 'test-secret';
+    });
+
+    it('signs a JWT with id and email', () => {
+      mockSign.mockReturnValue('signed-token' as never);
+
+      const token = generateToken({ id: 'user-1', email: 'a@b.com' });
+
+      expect(mockSign).toHaveBeenCalledWith(
+        { id: 'user-1', email: 'a@b.com' },
+        'test-secret',
+        { expiresIn: '7d' },
+      );
+      expect(token).toBe('signed-token');
     });
   });
 });

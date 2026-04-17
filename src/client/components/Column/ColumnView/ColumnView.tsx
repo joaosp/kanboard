@@ -1,7 +1,9 @@
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { List } from '../../../types';
 import { ColumnHeader } from '../ColumnHeader/ColumnHeader';
 import { CardItem } from '../../Card/CardItem/CardItem';
 import { AddCardForm } from '../AddCardForm/AddCardForm';
+import { EmptyDropZone } from '../EmptyDropZone/EmptyDropZone';
 import styles from './ColumnView.module.css';
 
 interface ColumnViewProps {
@@ -14,11 +16,17 @@ export function ColumnView({ list }: ColumnViewProps) {
   return (
     <div className={styles.column} data-testid="column">
       <ColumnHeader list={list} />
-      <div className={styles.cards}>
-        {sortedCards.map((card) => (
-          <CardItem key={card.id} card={card} />
-        ))}
-      </div>
+      <SortableContext
+        items={sortedCards.map((c) => c.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className={styles.cards} data-testid={`column-droppable-${list.id}`}>
+          {sortedCards.length === 0 && <EmptyDropZone listId={list.id} />}
+          {sortedCards.map((card) => (
+            <CardItem key={card.id} card={card} />
+          ))}
+        </div>
+      </SortableContext>
       <div className={styles.footer}>
         <AddCardForm listId={list.id} />
       </div>

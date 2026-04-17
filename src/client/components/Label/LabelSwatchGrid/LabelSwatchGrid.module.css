@@ -1,0 +1,36 @@
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.swatch {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.swatch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.swatch[data-color='red']    { background-color: var(--color-label-red); }
+.swatch[data-color='amber']  { background-color: var(--color-label-amber); }
+.swatch[data-color='green']  { background-color: var(--color-label-green); }
+.swatch[data-color='blue']   { background-color: var(--color-label-blue); }
+.swatch[data-color='purple'] { background-color: var(--color-label-purple); }
+.swatch[data-color='slate']  { background-color: var(--color-label-slate); }
+
+.swatch:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.selected {
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
+}

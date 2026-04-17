@@ -1,0 +1,81 @@
+.popover {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3);
+  min-width: 18rem;
+  max-width: 22rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: var(--space-2);
+  text-align: center;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.row:hover:not(:disabled),
+.row:focus-visible {
+  background-color: var(--color-background);
+  outline: none;
+}
+
+.row:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.checkbox {
+  width: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.manageLink {
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  padding: var(--space-2);
+  cursor: pointer;
+  text-align: left;
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-1);
+}
+
+.manageLink:hover {
+  color: var(--color-primary-hover);
+}

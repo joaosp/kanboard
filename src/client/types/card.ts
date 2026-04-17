@@ -1,3 +1,5 @@
+import { Label } from './label';
+
 export interface Card {
   id: string;
   listId: string;
@@ -6,4 +8,5 @@ export interface Card {
   position: number;
   createdAt: string;
   updatedAt: string;
+  labels?: Label[];
 }

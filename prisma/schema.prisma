@@ -26,6 +26,7 @@ model Board {
   updatedAt DateTime      @updatedAt @map("updated_at")
   members   BoardMember[]
   lists     List[]
+  labels    Label[]
 
   @@map("boards")
 }
@@ -57,15 +58,43 @@ model List {
 }
 
 model Card {
-  id          String   @id @default(uuid())
-  listId      String   @map("list_id")
+  id          String      @id @default(uuid())
+  listId      String      @map("list_id")
   title       String
   description String?
   position    Int
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  list        List        @relation(fields: [listId], references: [id], onDelete: Cascade)
+  cardLabels  CardLabel[]
 
   @@index([listId], name: "idx_card_list")
   @@map("cards")
+}
+
+model Label {
+  id         String      @id @default(uuid())
+  boardId    String      @map("board_id")
+  name       String
+  color      String
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  board      Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cardLabels CardLabel[]
+
+  @@unique([boardId, name], map: "uniq_label_board_name")
+  @@index([boardId], map: "idx_label_board")
+  @@map("labels")
+}
+
+model CardLabel {
+  cardId    String   @map("card_id")
+  labelId   String   @map("label_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label     Label    @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, labelId])
+  @@index([labelId], map: "idx_card_label_label")
+  @@map("card_labels")
 }
